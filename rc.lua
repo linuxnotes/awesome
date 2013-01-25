@@ -1,15 +1,18 @@
-
---file for monitor position configuration
--- ~/.kde/share/config/krandrrc
 -- Standard awesome library
 require("awful")
 require("awful.autofocus")
 require("awful.rules")
+
 -- Theme handling library
 require("beautiful")
+
 -- Notification library
 require("naughty")
 
+-- Load Debian menu entries
+require("debian.menu")
+
+-- Packet for vidgets
 require("vicious")
 
 -- {{{ Error handling
@@ -39,11 +42,11 @@ end
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
-beautiful.init("/home/anton/.config/awesome/themes/default_my/theme.lua")
+beautiful.init("/home/user/.config/awesome/themes/my_zenburn/theme.lua")
 
 -- This is used later as the default terminal and editor to run.
 terminal = "xterm -bg black -fg green"
-editor = os.getenv("EDITOR") or "nano"
+editor = "emacs"
 editor_cmd = terminal .. " -e " .. editor
 
 -- Default modkey.
@@ -52,6 +55,7 @@ editor_cmd = terminal .. " -e " .. editor
 -- I suggest you to remap Mod4 to another key using xmodmap or other tools.
 -- However, you can use another modifier like Mod1, but it may interact with others.
 modkey = "Mod4"
+modkey1 = "Mod1"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
 layouts =
@@ -76,7 +80,7 @@ layouts =
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ "www", "js", "py", 4, 5, 6, 7, 8, 9 }, s, layouts[1])
+    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[1])
 end
 -- }}}
 
@@ -89,13 +93,37 @@ myawesomemenu = {
    { "quit", awesome.quit }
 }
 
-mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu, beautiful.awesome_icon },
-                                    { "open terminal", terminal }
-                                  }
+mymainmenu = awful.menu(
+   { 
+	  items = { 
+		 { "awesome", myawesomemenu, beautiful.awesome_icon },
+		 { "open terminal", terminal }
+	  }
+   })
+
+mymenu = {
+   { "chromium", "chromium-browser" },
+   { "emacs", "emacs" },
+}
+
+-- Menu config
+mymainmenu = awful.menu({ 
+						   items = { 
+							  { "awesome", myawesomemenu, beautiful.awesome_icon },
+							  { "Debian", debian.menu.Debian_menu.Debian },
+							  { "open terminal", terminal }, 
+							  { "mymenu" , mymenu } 
+						   }
                         })
 
-mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
-                                     menu = mymainmenu })
+mylauncher = awful.widget.launcher({ 
+									  image = image(beautiful.awesome_icon),
+									  menu = mymainmenu 
+								   })
+-- }}}
+
+-- mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
+--                                      menu = mymainmenu })
 -- }}}
 
 -- {{{ Wibox
@@ -110,11 +138,61 @@ mysystray = widget({ type = "systray" })
 
 memwidget = widget({type = "textbox"})
 vicious.cache(vicious.widgets.mem)
-vicious.register(memwidget, vicious.widgets.mem, "||$1%($2MB)||", 10)
+vicious.register(memwidget, vicious.widgets.mem, "|$1%($2MB)|", 10)
+
+wifiwidget = widget({type = "textbox"})
+vicious.cache(vicious.widgets.wifi)
+vicious.register(wifiwidget, vicious.widgets.wifi, "| ${ssid} |", 10, "wlan0")
+
+
+langwidget = widget({type = "textbox"})
+
+function mykey_update()
+    local fd = io.popen("skb")
+    local key_layout = fd:read()
+    fd:close()
+    langwidget.text = key_layout
+    return
+end
+
+
+
+
+
+
+-- Keyboard map indicator and changer
+kbdcfg = {}
+kbdcfg.cmd = "setxkbmap"
+kbdcfg.layout = { "us", "ru" }
+kbdcfg.current = 1  -- us is our default layout
+kbdcfg.widget = widget({ type = "textbox", align = "right" })
+kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+kbdcfg.switch = function ()
+   kbdcfg.current = kbdcfg.current % #(kbdcfg.layout) + 1
+   local t = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+   kbdcfg.widget.text = t
+   os.execute( kbdcfg.cmd .. t )
+end
 
 cpuwidget = widget({type = "textbox"})
 vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
 
+batwidget = awful.widget.progressbar()
+batwidget:set_width(10)
+batwidget:set_height(20)
+batwidget:set_vertical(true)
+batwidget:set_background_color("#494B4F")
+batwidget:set_border_color(nil)
+batwidget:set_color("#AECF96")
+batwidget:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
+vicious.register(batwidget, vicious.widgets.bat, "$2", 61, "BAT1")
+
+cpuwidget = awful.widget.graph()
+cpuwidget:set_width(50)
+cpuwidget:set_background_color("#494B4F")
+cpuwidget:set_color("#FF5656")
+cpuwidget:set_gradient_colors({ "#FF5656", "#88A175", "#AECF96" })
+vicious.register(cpuwidget, vicious.widgets.cpu, "$1", 3)
 
 -- cpuwidget1 = awful.widget.graph()
 -- cpuwidget1:set_width(50)
@@ -201,9 +279,12 @@ for s = 1, screen.count() do
         },
         mylayoutbox[s],
         mytextclock,
-        cpuwidget,
+        --cpuwidget,
 		--cpuwidget1,
         memwidget,
+		langwidget,
+		kbdcfg.widget,
+		wifiwidget,
         s == 1 and mysystray or nil,
         mytasklist[s],
         layout = awful.widget.layout.horizontal.rightleft
@@ -221,6 +302,7 @@ root.buttons(awful.util.table.join(
 
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
+    awful.key({"Mod1",   }, "Shift_L" , kbdcfg.switch ),
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
     awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ),
     
@@ -242,6 +324,16 @@ globalkeys = awful.util.table.join(
             awful.client.focus.byidx(-1)
             if client.focus then client.focus:raise() end
         end),
+	    awful.key({ "Mod1",           }, "Tab",
+		    function ()
+		    awful.client.focus.byidx(-1)
+		    if client.focus then client.focus:raise() end
+		    end), 
+	    awful.key({ "Mod1",           }, "Tab",
+		    function ()
+		    awful.client.focus.byidx(-1)
+		    if client.focus then client.focus:raise() end
+		    end) ,
     awful.key({ modkey,           }, "w", function () mymainmenu:show({keygrabber=true}) end),
 
     -- Layout manipulation
@@ -277,6 +369,14 @@ globalkeys = awful.util.table.join(
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
     awful.key({ "Mod1" },            "F2",     function () mypromptbox[mouse.screen]:run() end),
+
+-- Brightness
+
+awful.key({ }, "XF86MonBrightnessDown", function ()
+    awful.util.spawn("xbacklight -dec 15") end),
+awful.key({ }, "XF86MonBrightnessUp", function ()
+    awful.util.spawn("xbacklight -inc 15") end),
+
 
     awful.key({ modkey }, "x",
               function ()
@@ -411,11 +511,34 @@ client.add_signal("manage", function (c, startup)
     end
 end)
 
-client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
-client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+-- xcompmgr 
+-- feh
 
-awful.util.spawn_with_shell("sh setxkbmap.sh")
-awful.util.spawn_with_shell("sh /etc/rc5.d/Scpufreq")
+client_focus = function(c) 
+   c.border_color = beautiful.border_focus 
+   c.opacity = 1
+end
+
+client_unfocus = function(c) 
+   c.border_color = beautiful.border_normal 
+   c.opacity = 0.7
+end
+
+client.add_signal("focus", client_focus)
+client.add_signal("unfocus", client_unfocus)
+
+
+
+--awful.util.spawn_with_shell("sh ~/pro/bash/setxkbmap.sh")
+
+awful.util.spawn_with_shell("xcompmgr &")
+
+-- client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
+-- client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
+
+-- awful.util.spawn_with_shell("sh setxkbmap.sh")
+-- awful.util.spawn_with_shell("sh /etc/rc5.d/Scpufreq")
+
 awful.util.spawn_with_shell("dropbox start")
 awful.key({modkey}, "F12", function() awful.util.spawn("xlock") end)
 -- }}}
