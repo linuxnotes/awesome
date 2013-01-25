@@ -13,7 +13,7 @@ require("naughty")
 require("debian.menu")
 
 -- Packet for vidgets
-require("vicious")
+vicious = require("vicious")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
