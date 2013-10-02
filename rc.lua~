@@ -7,7 +7,11 @@ require("beautiful")
 -- Notification library
 require("naughty")
 
-require("vicious")
+-- Load Debian menu entries
+require("debian.menu")
+
+-- Packet for vidgets
+vicious = require("vicious")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -36,11 +40,13 @@ end
 
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
-beautiful.init("/home/anton/.config/awesome/themes/default_my/theme.lua")
+--beautiful.init("/home/user/.config/awesome/themes/my_zenburn/theme.lua")
+beautiful.init("/usr/share/awesome/themes/default/theme.lua")
+
 
 -- This is used later as the default terminal and editor to run.
 terminal = "xterm -bg black -fg green"
-editor = os.getenv("EDITOR") or "nano"
+editor = "emacs"
 editor_cmd = terminal .. " -e " .. editor
 
 -- Default modkey.
@@ -49,11 +55,12 @@ editor_cmd = terminal .. " -e " .. editor
 -- I suggest you to remap Mod4 to another key using xmodmap or other tools.
 -- However, you can use another modifier like Mod1, but it may interact with others.
 modkey = "Mod4"
+modkey1 = "Mod1"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
 layouts =
 {
-   -- awful.layout.suit.floating,
+    awful.layout.suit.floating,
     awful.layout.suit.tile,
     awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
@@ -73,7 +80,7 @@ layouts =
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ "www", "js", "py", 4, 5, 6, 7, 8, 9 }, s, layouts[1])
+    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8}, s, layouts[1])
 end
 -- }}}
 
@@ -86,8 +93,15 @@ myawesomemenu = {
    { "quit", awesome.quit }
 }
 
+mymenu = {
+   { "chromium", "chromium-browser" },
+   { "emacs", "emacs" },
+}
+
 mymainmenu = awful.menu({ items = { { "awesome", myawesomemenu, beautiful.awesome_icon },
-                                    { "open terminal", terminal }
+                                    { "Debian", debian.menu.Debian_menu.Debian },
+                                    { "open terminal", terminal }, 
+									{ "mymenu" , mymenu } 
                                   }
                         })
 
@@ -102,24 +116,66 @@ mytextclock = awful.widget.textclock({ align = "right" })
 -- Create a systray
 mysystray = widget({ type = "systray" })
 
-
 -- Creating my own widgets --
 
-memwidget = widget({type = "textbox"})
-vicious.cache(vicious.widgets.mem)
-vicious.register(memwidget, vicious.widgets.mem, "||$1%($2MB)||", 10)
+-- memwidget = widget({type = "textbox"})
+-- vicious.cache(vicious.widgets.mem)
+-- vicious.register(memwidget, vicious.widgets.mem, "|$1%($2MB)|", 10)
 
-cpuwidget = widget({type = "textbox"})
-vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
+-- wifiwidget = widget({type = "textbox"})
+-- vicious.cache(vicious.widgets.wifi)
+-- vicious.register(wifiwidget, vicious.widgets.wifi, "| ${ssid} |", 10, "wlan0")
 
+-- langwidget = widget({type = "textbox"})
 
--- cpuwidget1 = awful.widget.graph()
+-- function mykey_update()
+--     local fd = io.popen("skb")
+--     local key_layout = fd:read()
+--     fd:close()
+--     langwidget.text = key_layout
+--     return
+-- end
+
+-- -- Keyboard map indicator and changer
+-- kbdcfg = {}
+-- kbdcfg.cmd = "setxkbmap"
+-- kbdcfg.layout = { "us", "ru" }
+-- kbdcfg.current = 1  -- us is our default layout
+-- kbdcfg.widget = widget({ type = "textbox", align = "right" })
+-- kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+-- kbdcfg.switch = function ()
+--    kbdcfg.current = kbdcfg.current % #(kbdcfg.layout) + 1
+--    local t = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+--    kbdcfg.widget.text = t
+--    os.execute( kbdcfg.cmd .. t )
+-- end
+
+-- cpuwidget = widget({type = "textbox"})
+-- vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
+
+-- batwidget = awful.widget.progressbar()
+-- batwidget:set_width(10)
+-- batwidget:set_height(20)
+-- batwidget:set_vertical(true)
+-- batwidget:set_background_color("#494B4F")
+-- batwidget:set_border_color(nil)
+-- batwidget:set_color("#AECF96")
+-- batwidget:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
+-- vicious.register(batwidget, vicious.widgets.bat, "$2", 61, "BAT1")
+
+-- cpuwidget = awful.widget.graph()
+-- cpuwidget:set_width(50)
+-- cpuwidget:set_background_color("#494B4F")
+-- cpuwidget:set_color("#FF5656")
+-- cpuwidget:set_gradient_colors({ "#FF5656", "#88A175", "#AECF96" })
+-- vicious.register(cpuwidget, vicious.widgets.cpu, "$1", 3)
+
+-- cpuwidget1 = awful.widget.graph()l
 -- cpuwidget1:set_width(50)
 -- cpuwidget1:set_background_color("#494B4F")
 -- cpuwidget1:set_color("#FF5656")
 -- cpuwidget1:set_gradient_colors({ "#FF5656", "#88A175", "#AECF96" })
 -- vicious.register(cpuwidget1, vicious.widgets.cpu, "$1")
-
 
 
 -- Create a wibox for each screen and add it
@@ -196,11 +252,14 @@ for s = 1, screen.count() do
             mypromptbox[s],
             layout = awful.widget.layout.horizontal.leftright
         },
-        mylayoutbox[s],
-        mytextclock,
-        cpuwidget,
-		--cpuwidget1,
-        memwidget,
+        -- mylayoutbox[s],
+        -- mytextclock,
+		-- --cpuwidget,
+		-- --cpuwidget1,
+        -- memwidget,
+		-- langwidget,
+		-- kbdcfg.widget,
+		-- wifiwidget,
         s == 1 and mysystray or nil,
         mytasklist[s],
         layout = awful.widget.layout.horizontal.rightleft
@@ -220,13 +279,6 @@ root.buttons(awful.util.table.join(
 globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
     awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ),
-    
-    -- Добавим переключение по Alt + Control + плюс стрелочка	
-    awful.key({ "Mod1",  "Control" }, "Left",   awful.tag.viewprev       ),
-    awful.key({ "Mod1",  "Control"     }, "Right",  awful.tag.viewnext       ),
-	-- сделаем hot key для вызова emacs
-	awful.key({ modkey, }, "e",  function () awful.util.spawn("emacs") end),
-
     awful.key({ modkey,           }, "Escape", awful.tag.history.restore),
 
     awful.key({ modkey,           }, "j",
@@ -273,7 +325,6 @@ globalkeys = awful.util.table.join(
 
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
-    awful.key({ "Mod1" },            "F2",     function () mypromptbox[mouse.screen]:run() end),
 
     awful.key({ modkey }, "x",
               function ()
@@ -287,11 +338,6 @@ globalkeys = awful.util.table.join(
 clientkeys = awful.util.table.join(
     awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
-   
-    -- Добавим закрытие по Alt + F4
-    awful.key({ "Mod1",    }, "F4",      function (c) c:kill()                         end),
-
-    
     awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
     awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
@@ -323,11 +369,9 @@ for i = 1, keynumber do
     globalkeys = awful.util.table.join(globalkeys,
         awful.key({ modkey }, "#" .. i + 9,
                   function ()
-                        --local screen = mouse.screen
-                        for s = 1, screen.count() do 
-                            if tags[s][i] then
-                                awful.tag.viewonly(tags[s][i])
-                            end
+                        local screen = mouse.screen
+                        if tags[screen][i] then
+                            awful.tag.viewonly(tags[screen][i])
                         end
                   end),
         awful.key({ modkey, "Control" }, "#" .. i + 9,
@@ -410,9 +454,4 @@ end)
 
 client.add_signal("focus", function(c) c.border_color = beautiful.border_focus end)
 client.add_signal("unfocus", function(c) c.border_color = beautiful.border_normal end)
-
-awful.util.spawn_with_shell("sh setxkbmap.sh")
-awful.util.spawn_with_shell("sh /etc/rc5.d/Scpufreq")
-awful.util.spawn_with_shell("dropbox start")
-awful.key({modkey}, "F12", function() awful.util.spawn("xlock") end)
 -- }}}

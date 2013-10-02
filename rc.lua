@@ -40,10 +40,11 @@ do
 end
 -- }}}
 
--- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
+-- beautiful.init("/usr/share/awesome/themes/default/theme.lua")
 beautiful.init("/home/user/.config/awesome/themes/my_zenburn/theme.lua")
 
+-- {{{ Variable definitions
 -- This is used later as the default terminal and editor to run.
 terminal = "xterm -bg black -fg green"
 editor = "emacs"
@@ -58,9 +59,7 @@ modkey = "Mod4"
 modkey1 = "Mod1"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
-layouts =
-{
-   -- awful.layout.suit.floating,
+layouts = {
     awful.layout.suit.tile,
     awful.layout.suit.tile.left,
     awful.layout.suit.tile.bottom,
@@ -71,7 +70,8 @@ layouts =
     awful.layout.suit.spiral.dwindle,
     awful.layout.suit.max,
     awful.layout.suit.max.fullscreen,
-    awful.layout.suit.magnifier
+    awful.layout.suit.magnifier,
+	awful.layout.suit.floating
 }
 -- }}}
 
@@ -80,7 +80,7 @@ layouts =
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[1])
+    tags[s] = awful.tag({ 'trm', 'brwsr', 'emacs', 4, 5, 6, 'icq', 8, 9 }, s, layouts[1])
 end
 -- }}}
 
@@ -122,10 +122,6 @@ mylauncher = awful.widget.launcher({
 								   })
 -- }}}
 
--- mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
---                                      menu = mymainmenu })
--- }}}
-
 -- {{{ Wibox
 -- Create a textclock widget
 mytextclock = awful.widget.textclock({ align = "right" })
@@ -135,7 +131,6 @@ mysystray = widget({ type = "systray" })
 
 
 -- Creating my own widgets --
-
 memwidget = widget({type = "textbox"})
 vicious.cache(vicious.widgets.mem)
 vicious.register(memwidget, vicious.widgets.mem, "|$1%($2MB)|", 10)
@@ -144,35 +139,46 @@ wifiwidget = widget({type = "textbox"})
 vicious.cache(vicious.widgets.wifi)
 vicious.register(wifiwidget, vicious.widgets.wifi, "| ${ssid} |", 10, "wlan0")
 
-
+-- Настройка языка
+awful.util.spawn_with_shell("setxkbmap &")
 langwidget = widget({type = "textbox"})
+langwidget.text = "en"
+keynum = 1
 
-function mykey_update()
-    local fd = io.popen("skb")
-    local key_layout = fd:read()
-    fd:close()
-    langwidget.text = key_layout
-    return
+function change_text()
+   if keynum == 0 then
+	  langwidget.text = "en"
+	  keynum = 1 - keynum
+   else 
+	  langwidget.text = "ru"
+	  keynum = 1 - keynum
+   end
 end
 
 
-
-
-
+-- Предыдущие варианты
+-- function mykey_update()
+--     local fd = io.popen("skb")
+--     local key_layout = fd:read()
+--     fd:close()
+--     langwidget.text = key_layout
+--     return
+-- end
 
 -- Keyboard map indicator and changer
-kbdcfg = {}
-kbdcfg.cmd = "setxkbmap"
-kbdcfg.layout = { "us", "ru" }
-kbdcfg.current = 1  -- us is our default layout
-kbdcfg.widget = widget({ type = "textbox", align = "right" })
-kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
-kbdcfg.switch = function ()
-   kbdcfg.current = kbdcfg.current % #(kbdcfg.layout) + 1
-   local t = " " .. kbdcfg.layout[kbdcfg.current] .. " "
-   kbdcfg.widget.text = t
-   os.execute( kbdcfg.cmd .. t )
-end
+-- kbdcfg = {}
+-- kbdcfg.cmd = "setxkbmap"
+-- kbdcfg.layout = { "us", "ru" }
+-- kbdcfg.current = 1  -- us is our default layout
+-- kbdcfg.widget = widget({ type = "textbox", align = "right" })
+-- kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+-- kbdcfg.switch = function ()
+--    kbdcfg.current = kbdcfg.current % #(kbdcfg.layout) + 1
+--    local t = " " .. kbdcfg.layout[kbdcfg.current] .. " "
+--    kbdcfg.widget.text = t
+--    os.execute( kbdcfg.cmd .. t )
+-- end
+
 
 cpuwidget = widget({type = "textbox"})
 vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
@@ -283,7 +289,7 @@ for s = 1, screen.count() do
 		--cpuwidget1,
         memwidget,
 		langwidget,
-		kbdcfg.widget,
+		-- kbdcfg.widget,
 		wifiwidget,
         s == 1 and mysystray or nil,
         mytasklist[s],
@@ -302,7 +308,8 @@ root.buttons(awful.util.table.join(
 
 -- {{{ Key bindings
 globalkeys = awful.util.table.join(
-    awful.key({"Mod1",   }, "Shift_L" , kbdcfg.switch ),
+   awful.key({"Mod1",   }, "Shift_L" , change_text ),
+    -- awful.key({"Mod1",   }, "Shift_L" , kbdcfg.switch ),
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
     awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ),
     
