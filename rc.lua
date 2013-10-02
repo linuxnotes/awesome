@@ -140,7 +140,7 @@ vicious.cache(vicious.widgets.wifi)
 vicious.register(wifiwidget, vicious.widgets.wifi, "| ${ssid} |", 10, "wlan0")
 
 -- Настройка языка
-awful.util.spawn_with_shell("setxkbmap &")
+awful.util.spawn_with_shell("setxkbmap -layout us,ru -option grp:alt_shift_toggle")
 langwidget = widget({type = "textbox"})
 langwidget.text = "en"
 keynum = 1
@@ -155,33 +155,8 @@ function change_text()
    end
 end
 
-
--- Предыдущие варианты
--- function mykey_update()
---     local fd = io.popen("skb")
---     local key_layout = fd:read()
---     fd:close()
---     langwidget.text = key_layout
---     return
--- end
-
--- Keyboard map indicator and changer
--- kbdcfg = {}
--- kbdcfg.cmd = "setxkbmap"
--- kbdcfg.layout = { "us", "ru" }
--- kbdcfg.current = 1  -- us is our default layout
--- kbdcfg.widget = widget({ type = "textbox", align = "right" })
--- kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
--- kbdcfg.switch = function ()
---    kbdcfg.current = kbdcfg.current % #(kbdcfg.layout) + 1
---    local t = " " .. kbdcfg.layout[kbdcfg.current] .. " "
---    kbdcfg.widget.text = t
---    os.execute( kbdcfg.cmd .. t )
--- end
-
-
-cpuwidget = widget({type = "textbox"})
-vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
+-- cpuwidget = widget({type = "textbox", align = "right"})
+-- vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
 
 batwidget = awful.widget.progressbar()
 batwidget:set_width(10)
@@ -193,21 +168,13 @@ batwidget:set_color("#AECF96")
 batwidget:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
 vicious.register(batwidget, vicious.widgets.bat, "$2", 61, "BAT1")
 
-cpuwidget = awful.widget.graph()
+
+cpuwidget = awful.widget.graph({layout=awful.widget.layout.horizontal.rightleft})
 cpuwidget:set_width(50)
 cpuwidget:set_background_color("#494B4F")
 cpuwidget:set_color("#FF5656")
 cpuwidget:set_gradient_colors({ "#FF5656", "#88A175", "#AECF96" })
-vicious.register(cpuwidget, vicious.widgets.cpu, "$1", 3)
-
--- cpuwidget1 = awful.widget.graph()
--- cpuwidget1:set_width(50)
--- cpuwidget1:set_background_color("#494B4F")
--- cpuwidget1:set_color("#FF5656")
--- cpuwidget1:set_gradient_colors({ "#FF5656", "#88A175", "#AECF96" })
--- vicious.register(cpuwidget1, vicious.widgets.cpu, "$1")
-
-
+vicious.register(cpuwidget, vicious.widgets.cpu, "$1", 1)
 
 -- Create a wibox for each screen and add it
 mywibox = {}
@@ -285,11 +252,9 @@ for s = 1, screen.count() do
         },
         mylayoutbox[s],
         mytextclock,
-        --cpuwidget,
-		--cpuwidget1,
+        cpuwidget,
         memwidget,
 		langwidget,
-		-- kbdcfg.widget,
 		wifiwidget,
         s == 1 and mysystray or nil,
         mytasklist[s],
