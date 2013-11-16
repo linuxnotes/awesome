@@ -15,6 +15,8 @@ require("debian.menu")
 -- Packet for vidgets
 vicious = require("vicious")
 
+awesome_base_path = "~/.config/awesome/"
+
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
 -- another config (This code will only ever execute for the fallback config)
@@ -139,23 +141,67 @@ wifiwidget = widget({type = "textbox"})
 vicious.cache(vicious.widgets.wifi)
 vicious.register(wifiwidget, vicious.widgets.wifi, "| ${ssid} |", 10, "wlan0")
 
+require("os")
+
+function os.capture(cmd, raw)
+  local f = assert(io.popen(cmd, 'r'))
+  local s = assert(f:read('*a'))
+  f:close()
+  if raw then return s end
+  s = string.gsub(s, '^%s+', '')
+  s = string.gsub(s, '%s+$', '')
+  s = string.gsub(s, '[\n\r]+', ' ')
+  return s
+end
+
+function get_lang() 
+   result =  os.capture("~/.config/awesome/get_keyboard.sh")
+   if result == "en" then 
+	  return "ru"
+   else 
+	  return "en"
+   end
+end;
+
+
+
 -- Настройка языка
 awful.util.spawn_with_shell("setxkbmap -layout us,ru -option grp:alt_shift_toggle")
 langwidget = widget({type = "textbox"})
 langwidget.text = "en"
 keynum = 1
 
+
 function change_text()
-   if keynum == 0 then
-	  langwidget.text = "en"
-	  keynum = 1 - keynum
+   langwidget.text = get_lang()
+end
+
+-- function change_text()
+--    if keynum == 0 then
+-- 	  langwidget.text = "en"
+-- 	  keynum = 1 - keynum
+--    else 
+-- 	  langwidget.text = "ru"
+-- 	  keynum = 1 - keynum
+--    end
+-- end
+
+
+awful.util.spawn_with_shell(awesome_base_path .. "scripts/touchpad" .. " 1")
+touchpad_state = 1
+function toggle_touchpad()
+   if touchpad_state == 1 then 
+	  awful.util.spawn_with_shell(awesome_base_path .. "scripts/touchpad" )
+	  touchpad_state = 1 - touchpad_state
    else 
-	  langwidget.text = "ru"
-	  keynum = 1 - keynum
+	  awful.util.spawn_with_shell(awesome_base_path .. "scripts/touchpad" .. " 1" )
+	  touchpad_state = 1 - touchpad_state
    end
 end
 
--- cpuwidget = widget({type = "textbox", align = "right"})
+
+
+-- Cpuwidget = widget({type = "textbox", align = "right"})
 -- vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
 
 batwidget = awful.widget.progressbar()
@@ -342,6 +388,9 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
     awful.key({ "Mod1" },            "F2",     function () mypromptbox[mouse.screen]:run() end),
 
+	-- включение выключение touchpad
+	awful.key({modkey,  }, "a", toggle_touchpad),
+
 -- Brightness
 
 awful.key({ }, "XF86MonBrightnessDown", function ()
@@ -372,8 +421,7 @@ clientkeys = awful.util.table.join(
     awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
     awful.key({ modkey, "Shift"   }, "r",      function (c) c:redraw()                       end),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end),
-    awful.key({ modkey,           }, "n",
-        function (c)
+    awful.key({ modkey,           }, "n",      function (c)
             -- The client currently has the input focus, so it cannot be
             -- minimized, since minimized clients can't have the focus.
             c.minimized = true
@@ -513,4 +561,6 @@ awful.util.spawn_with_shell("xcompmgr &")
 
 awful.util.spawn_with_shell("dropbox start")
 awful.key({modkey}, "F12", function() awful.util.spawn("xlock") end)
+awful.util.spawn_with_shell("conky")
+
 -- }}}
