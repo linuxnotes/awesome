@@ -63,18 +63,24 @@ modkey1 = "Mod1"
 -- Table of layouts to cover with awful.layout.inc, order matters.
 layouts = {
     awful.layout.suit.tile,
-    awful.layout.suit.tile.left,
-    awful.layout.suit.tile.bottom,
-    awful.layout.suit.tile.top,
-    awful.layout.suit.fair,
-    awful.layout.suit.fair.horizontal,
-    awful.layout.suit.spiral,
-    awful.layout.suit.spiral.dwindle,
     awful.layout.suit.max,
-    awful.layout.suit.max.fullscreen,
-    awful.layout.suit.magnifier,
 	awful.layout.suit.floating
 }
+
+-- layouts = {
+--     awful.layout.suit.tile,
+--     awful.layout.suit.tile.left,
+--     awful.layout.suit.tile.bottom,
+--     awful.layout.suit.tile.top,
+--     awful.layout.suit.fair,
+--     awful.layout.suit.fair.horizontal,
+--     awful.layout.suit.spiral,
+--     awful.layout.suit.spiral.dwindle,
+--     awful.layout.suit.max,
+--     awful.layout.suit.max.fullscreen,
+--     awful.layout.suit.magnifier,
+-- 	awful.layout.suit.floating
+-- }
 -- }}}
 
 -- {{{ Tags
@@ -82,7 +88,18 @@ layouts = {
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 'trm', 'brwsr', 'emacs', 4, 5, 6, 'icq', 8, 9 }, s, layouts[1])
+    tags[s] = awful.tag({ 'trm', 'brwsr', 'emacs', 4, 5, 6, 'icq', 8, 9 }, s, 
+						{ layouts[1], 
+						  layouts[1],
+						  layouts[1],
+						  layouts[2],
+						  
+						  layouts[1],
+						  layouts[1],
+						  layouts[1],
+						  layouts[1]
+						}
+					   )
 end
 -- }}}
 
@@ -201,18 +218,34 @@ end
 
 
 
+
 -- Cpuwidget = widget({type = "textbox", align = "right"})
 -- vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
 
-batwidget = awful.widget.progressbar()
-batwidget:set_width(10)
-batwidget:set_height(20)
-batwidget:set_vertical(true)
-batwidget:set_background_color("#494B4F")
-batwidget:set_border_color(nil)
-batwidget:set_color("#AECF96")
-batwidget:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
-vicious.register(batwidget, vicious.widgets.bat, "$2", 61, "BAT1")
+-- batwidget = awful.widget.progressbar()
+-- batwidget:set_width(10)
+-- batwidget:set_height(20)
+-- batwidget:set_vertical(true)
+-- batwidget:set_background_color("#494B4F")
+-- batwidget:set_border_color(nil)
+-- batwidget:set_color("#AECF96")
+-- batwidget:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
+-- vicious.register(batwidget, vicious.widgets.bat, "$2", 61, "BAT1")
+
+-- еще вариант, правда http://awesome.naquadah.org/wiki/Gigamo_Battery_Widget
+-- для 3.5
+battery_widget = widget({type="textbox", align = "right"})
+function batteryInfo(adapter)
+     spacer = " "
+	 text  = "Bat:" .. os.capture("~/.config/awesome/get_battery.sh") .. "%|"
+	 battery_widget.text = text
+end
+batteryInfo("BAT0")
+battery_timer = timer({timeout = 60})
+battery_timer:add_signal("timeout", function()
+     batteryInfo("BAT0")
+end)
+battery_timer:start()
 
 
 cpuwidget = awful.widget.graph({layout=awful.widget.layout.horizontal.rightleft})
@@ -299,6 +332,7 @@ for s = 1, screen.count() do
         mylayoutbox[s],
         mytextclock,
         cpuwidget,
+		battery_widget,
         memwidget,
 		langwidget,
 		wifiwidget,
@@ -564,3 +598,4 @@ awful.key({modkey}, "F12", function() awful.util.spawn("xlock") end)
 awful.util.spawn_with_shell("conky")
 
 -- }}}
+
