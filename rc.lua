@@ -48,7 +48,8 @@ beautiful.init("/home/user/.config/awesome/themes/my_zenburn/theme.lua")
 
 -- {{{ Variable definitions
 -- This is used later as the default terminal and editor to run.
-terminal = "xterm -bg black -fg green"
+terminal = "xterm "
+-- terminal = "xterm -bg black -fg green"
 editor = "emacs"
 editor_cmd = terminal .. " -e " .. editor
 
