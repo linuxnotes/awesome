@@ -598,5 +598,8 @@ awful.util.spawn_with_shell("dropbox start")
 awful.key({modkey}, "F12", function() awful.util.spawn("xlock") end)
 awful.util.spawn_with_shell("conky")
 
+
+awful.util.spawn_with_shell("syndaemon -t 1 -d ")
+
 -- }}}
 
