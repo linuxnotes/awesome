@@ -10,7 +10,15 @@ require("beautiful")
 require("naughty")
 
 -- Load Debian menu entries
-require("debian.menu")
+-- require("debian.menu")
+debian = {}
+local status, module = pcall(require, 'debian.menu')
+if status == nil then
+   debian.menu = nil 
+else 
+   debian.menu = module
+end
+
 
 -- Packet for vidgets
 vicious = require("vicious")
@@ -596,7 +604,10 @@ awful.util.spawn_with_shell("xcompmgr &")
 
 awful.util.spawn_with_shell("dropbox start")
 awful.key({modkey}, "F12", function() awful.util.spawn("xlock") end)
-awful.util.spawn_with_shell("conky")
+awful.util.spawn_with_shell("killall conky ; conky &")									 
+
+-- awful.util.spawn_with_shell("xrandr --output DVI-0 --auto --right-of DVI-1")									 
+
 
 -- }}}
 
