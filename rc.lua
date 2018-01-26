@@ -14,8 +14,8 @@ require("naughty")
 debian = {}
 local status, module = pcall(require, 'debian.menu')
 if status == nil then
-   debian.menu = nil 
-else 
+   debian.menu = nil
+else
    debian.menu = module
 end
 
@@ -24,6 +24,22 @@ end
 vicious = require("vicious")
 
 awesome_base_path = "~/.config/awesome/"
+
+require("io")
+log_file = "~/awesome.log"
+function clear_log()
+   f= io.open(log_file, "w")
+   f:close()
+end;
+
+function write_log(text)
+   f = io.open(log_file, "a+")
+   f:write(text)
+   f:write("\n")
+   f:close()
+end;
+
+clear_log()
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -51,7 +67,7 @@ end
 -- }}}
 
 -- Themes define colours, icons, and wallpapers
--- beautiful.init("/usr/share/awesome/themes/default/theme.lua")
+-- beautiful.init("/usr/share/awesome/themes/default/theme.luaho")
 beautiful.init("/home/user/.config/awesome/themes/my_zenburn/theme.lua")
 
 -- {{{ Variable definitions
@@ -71,9 +87,10 @@ modkey1 = "Mod1"
 
 -- Table of layouts to cover with awful.layout.inc, order matters.
 layouts = {
-    awful.layout.suit.tile,
-    awful.layout.suit.max,
-	awful.layout.suit.floating
+   awful.layout.suit.tile,
+   awful.layout.suit.max,
+   awful.layout.suit.floating,
+   awful.layout.suit.tile.bottom
 }
 
 -- layouts = {
@@ -97,16 +114,17 @@ layouts = {
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 'trm', 'brwsr', 'emacs', 4, 5, 6, 'icq', 8, 9 }, s, 
-						{ layouts[1], 
+    tags[s] = awful.tag({ 'trm', 'brwsr', 'emacs', 4, 5, 6, 'icq', 8, 9 }, s,
+						{ layouts[1],
 						  layouts[1],
 						  layouts[1],
 						  layouts[2],
-						  
+
 						  layouts[1],
 						  layouts[1],
 						  layouts[1],
-						  layouts[1]
+						  layouts[1],
+                          layouts[1]
 						}
 					   )
 end
@@ -122,8 +140,8 @@ myawesomemenu = {
 }
 
 mymainmenu = awful.menu(
-   { 
-	  items = { 
+   {
+	  items = {
 		 { "awesome", myawesomemenu, beautiful.awesome_icon },
 		 { "open terminal", terminal }
 	  }
@@ -135,18 +153,18 @@ mymenu = {
 }
 
 -- Menu config
-mymainmenu = awful.menu({ 
-						   items = { 
+mymainmenu = awful.menu({
+						   items = {
 							  { "awesome", myawesomemenu, beautiful.awesome_icon },
 							  { "Debian", debian.menu.Debian_menu.Debian },
-							  { "open terminal", terminal }, 
-							  { "mymenu" , mymenu } 
+							  { "open terminal", terminal },
+							  { "mymenu" , mymenu }
 						   }
                         })
 
-mylauncher = awful.widget.launcher({ 
+mylauncher = awful.widget.launcher({
 									  image = image(beautiful.awesome_icon),
-									  menu = mymainmenu 
+									  menu = mymainmenu
 								   })
 -- }}}
 
@@ -180,11 +198,11 @@ function os.capture(cmd, raw)
   return s
 end
 
-function get_lang() 
+function get_lang()
    result =  os.capture("~/.config/awesome/get_keyboard.sh")
-   if result == "en" then 
+   if result == "en" then
 	  return "ru"
-   else 
+   else
 	  return "en"
    end
 end;
@@ -206,7 +224,7 @@ end
 --    if keynum == 0 then
 -- 	  langwidget.text = "en"
 -- 	  keynum = 1 - keynum
---    else 
+--    else
 -- 	  langwidget.text = "ru"
 -- 	  keynum = 1 - keynum
 --    end
@@ -216,46 +234,19 @@ end
 awful.util.spawn_with_shell(awesome_base_path .. "scripts/touchpad" .. " 1")
 touchpad_state = 1
 function toggle_touchpad()
-   if touchpad_state == 1 then 
+   if touchpad_state == 1 then
 	  awful.util.spawn_with_shell(awesome_base_path .. "scripts/touchpad" )
 	  touchpad_state = 1 - touchpad_state
-   else 
+   else
 	  awful.util.spawn_with_shell(awesome_base_path .. "scripts/touchpad" .. " 1" )
 	  touchpad_state = 1 - touchpad_state
    end
 end
 
-
-
-
 -- Cpuwidget = widget({type = "textbox", align = "right"})
 -- vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
 
--- batwidget = awful.widget.progressbar()
--- batwidget:set_width(10)
--- batwidget:set_height(20)
--- batwidget:set_vertical(true)
--- batwidget:set_background_color("#494B4F")
--- batwidget:set_border_color(nil)
--- batwidget:set_color("#AECF96")
--- batwidget:set_gradient_colors({ "#AECF96", "#88A175", "#FF5656" })
--- vicious.register(batwidget, vicious.widgets.bat, "$2", 61, "BAT1")
-
--- еще вариант, правда http://awesome.naquadah.org/wiki/Gigamo_Battery_Widget
--- для 3.5
-battery_widget = widget({type="textbox", align = "right"})
-function batteryInfo(adapter)
-     spacer = " "
-	 text  = "Bat:" .. os.capture("~/.config/awesome/get_battery.sh") .. "%|"
-	 battery_widget.text = text
-end
-batteryInfo("BAT0")
-battery_timer = timer({timeout = 60})
-battery_timer:add_signal("timeout", function()
-     batteryInfo("BAT0")
-end)
-battery_timer:start()
-
+battery = require('battery')
 
 cpuwidget = awful.widget.graph({layout=awful.widget.layout.horizontal.rightleft})
 cpuwidget:set_width(50)
@@ -341,7 +332,8 @@ for s = 1, screen.count() do
         mylayoutbox[s],
         mytextclock,
         cpuwidget,
-		battery_widget,
+		battery.battery_widget,
+        battery.image_widget,
         memwidget,
 		langwidget,
 		wifiwidget,
@@ -366,8 +358,8 @@ globalkeys = awful.util.table.join(
     -- awful.key({"Mod1",   }, "Shift_L" , kbdcfg.switch ),
     awful.key({ modkey,           }, "Left",   awful.tag.viewprev       ),
     awful.key({ modkey,           }, "Right",  awful.tag.viewnext       ),
-    
-    -- Добавим переключение по Alt + Control + плюс стрелочка	
+
+    -- Добавим переключение по Alt + Control + плюс стрелочка
     awful.key({ "Mod1",  "Control" }, "Left",   awful.tag.viewprev       ),
     awful.key({ "Mod1",  "Control"     }, "Right",  awful.tag.viewnext       ),
 	-- сделаем hot key для вызова emacs
@@ -389,7 +381,7 @@ globalkeys = awful.util.table.join(
 		    function ()
 		    awful.client.focus.byidx(-1)
 		    if client.focus then client.focus:raise() end
-		    end), 
+		    end),
 	    awful.key({ "Mod1",           }, "Tab",
 		    function ()
 		    awful.client.focus.byidx(-1)
@@ -454,11 +446,11 @@ awful.key({ }, "XF86MonBrightnessUp", function ()
 clientkeys = awful.util.table.join(
     awful.key({ modkey,           }, "f",      function (c) c.fullscreen = not c.fullscreen  end),
     awful.key({ modkey, "Shift"   }, "c",      function (c) c:kill()                         end),
-   
+
     -- Добавим закрытие по Alt + F4
     awful.key({ "Mod1",    }, "F4",      function (c) c:kill()                         end),
 
-    
+
     awful.key({ modkey, "Control" }, "space",  awful.client.floating.toggle                     ),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end),
     awful.key({ modkey,           }, "o",      awful.client.movetoscreen                        ),
@@ -490,7 +482,7 @@ for i = 1, keynumber do
         awful.key({ modkey }, "#" .. i + 9,
                   function ()
                         --local screen = mouse.screen
-                        for s = 1, screen.count() do 
+                        for s = 1, screen.count() do
                             if tags[s][i] then
                                 awful.tag.viewonly(tags[s][i])
                             end
@@ -574,16 +566,16 @@ client.add_signal("manage", function (c, startup)
     end
 end)
 
--- xcompmgr 
+-- xcompmgr
 -- feh
 
-client_focus = function(c) 
-   c.border_color = beautiful.border_focus 
+client_focus = function(c)
+   c.border_color = beautiful.border_focus
    c.opacity = 1
 end
 
-client_unfocus = function(c) 
-   c.border_color = beautiful.border_normal 
+client_unfocus = function(c)
+   c.border_color = beautiful.border_normal
    c.opacity = 0.7
 end
 
@@ -602,15 +594,16 @@ awful.util.spawn_with_shell("xcompmgr &")
 -- awful.util.spawn_with_shell("sh setxkbmap.sh")
 -- awful.util.spawn_with_shell("sh /etc/rc5.d/Scpufreq")
 
-awful.util.spawn_with_shell("dropbox start")
+-- awful.util.spawn_with_shell("dropbox start")
 awful.key({modkey}, "F12", function() awful.util.spawn("xlock") end)
-awful.util.spawn_with_shell("killall conky ; conky &")									 
+awful.util.spawn_with_shell("killall conky ; conky &")
+awful.util.spawn_with_shell("killall  wicd-client; wicd-client &")
 
--- awful.util.spawn_with_shell("xrandr --output DVI-0 --auto --right-of DVI-1")									 
+
+-- awful.util.spawn_with_shell("xrandr --output DVI-0 --auto --right-of DVI-1")
 
 
 
 awful.util.spawn_with_shell("syndaemon -t 1 -d ")
 
 -- }}}
-
